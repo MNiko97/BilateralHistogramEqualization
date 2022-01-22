@@ -13,17 +13,20 @@ def showImageHDR(hdr_img):              #Show HDR open cv Image
     cv.waitKey(0)
     cv.destroyAllWindows()
 
-
 def sliceImageHDR(hdr_img):             #Slice Image
     x = np.linspace(0,65535,30)
-    slices = []
+    sk = []
     for i in range(29):
-        new= hdr_img[:,:] < x[i+1]
-        new = hdr_img*new
-        new1= new[:,:] > x[i]
-        slices.append(new1*hdr_img)
-    
-    return slices
+        null_compare = hdr_img[:,:] >= x[i+1]
+        if i > 0: 
+            slice = (hdr_img - x[i]) / (x[i+1] - x[i])
+            slice = slice*null_compare
+            m, n = np.where(hdr_img >= x[i])
+            slice[m,n] = hdr_img[m, n]
+        else:
+            slice = hdr_img
+        sk.append(slice)
+    return sk
 
 def showPltFig(slices):                 #Show Plt Figures
     columns = 5
@@ -56,7 +59,7 @@ def stretchHist(slc):
     cdf_m = (cdf_m - cdf_m.min())*max_bit/(cdf_m.max()-cdf_m.min())
     cdf = np.ma.filled(cdf_m,0).astype('uint16')
 
-    return cdf[slc]
+    return cdf[slc.astype('uint16')]
 
 def stretchSlicesHist(slices):
     slices_stretch = []
@@ -67,9 +70,42 @@ def stretchSlicesHist(slices):
     print(np.array(slices_stretch).shape) # Show shape
     return slices_stretch
 
-    
 
+def fusionSlices(stretched_slices,wi):
+    i= 0
+    fusion = wi[i]*stretched_slices[i]
+    for slc in stretched_slices :
+        if i == 0 :
+            fusion = fusion
+        else :
+            fusion += (np.matrix.dot(slc,wi[i])).astype('uint16')
+        i+=1
+    return fusion
+
+def getWeightMap():
+    x = np.linspace(0,65535,30)
+    wk = []
+    for i in range(29):
+        one_compare = hdr_img[:,:] <= x[i]
+        null_compare = hdr_img[:,:] >= x[i+1]
+        other_compare = (~ one_compare)*(~ null_compare)
+
+        wk.append(other_compare*hdr_img)
+    return wk
     
+def fusionNiko(wk, sk):
+    output = []
+    for i in range(29):
+        print(f"Processing slice {i}/29, progressing: {100*i/29}%", end="\r")
+        output.append(wk[i] @ sk[i])
+    print("Done                                                  ")
+    result = output[0]
+    for i in range(1, 29):
+        result += output[i].astype('uint16')
+    
+    return result
+
+
 if __name__ == "__main__":
 
     hdr_img = openImageHDR("image/image.tif")
@@ -79,15 +115,22 @@ if __name__ == "__main__":
     slicedImage = sliceImageHDR(hdr_img)
 
     #showPltFig(slicedImage)
-    savePltFig(slicedImage,'image/SlicedStretchImages')
+    # savePltFig(slicedImage,'image/SlicedStretchImages')
 
-    slicedStretchImage = stretchSlicesHist(slicedImage)
+    #slicedStretchImage = stretchSlicesHist(slicedImage)
 
     #showPltFig(slicedStretchImage)
-    savePltFig(slicedStretchImage,'image/SlicedStretchImages')
+    # savePltFig(slicedStretchImage,'image/SlicedStretchImages')
 
-    showImageHDR(slicedImage[5])
-    showImageHDR(slicedStretchImage[5])
+    strechHist = stretchSlicesHist(slicedImage)
+    # print(strechHist[5].shape)
+    weights = getWeightMap()
+
+    # fusion = fusionSlices(strechHist,weights)
+    fusion = fusionNiko(weights, strechHist)
+    # print(fusion)
+    showImageHDR(fusion)
+
     
 
 
