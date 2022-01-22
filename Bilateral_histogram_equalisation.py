@@ -67,7 +67,19 @@ def stretchSlicesHist(slices):
     print(np.array(slices_stretch).shape) # Show shape
     return slices_stretch
 
-    
+def fusion(stretched_slices,wi):
+    i= 0
+    fusion = wi[i]*stretched_slices[i]
+    for slc in stretched_slices :
+        if i == 0 : 
+            fusion = fusion
+        else :
+            fusion += slc*wi[i] 
+        i+=1
+    cv.imshow('fusion',fusion)
+    cv.waitKey(0)
+    cv.destroyAllWindows()
+    return fusion
 
     
 if __name__ == "__main__":
@@ -88,6 +100,9 @@ if __name__ == "__main__":
     
     showImageHDR(slicedImage[5])
     showImageHDR(slicedStretchImage[5])
+
+    weights = [0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0]
+    fusionned = fusion(slicedStretchImage,weights)
     
 
 
