@@ -2,19 +2,19 @@ import cv2 as cv
 import numpy as np
 from matplotlib import pyplot as plt
 
-def openImageHDR(path):
+def openImageHDR(path):                 #Open HDR open cv Image
     #image/image.tif
     hdr_img = cv.imread(path, -1)
     
     return hdr_img
 
-def showImageHDR(hdr_img):
+def showImageHDR(hdr_img):              #Show HDR open cv Image
     cv.imshow('TiffShow',hdr_img)
     cv.waitKey(0)
     cv.destroyAllWindows()
 
 
-def sliceImageHDR(hdr_img):
+def sliceImageHDR(hdr_img):             #Slice Image
     x = np.linspace(0,65535,30)
     slices = []
     for i in range(29):
@@ -25,7 +25,7 @@ def sliceImageHDR(hdr_img):
     
     return slices
 
-def showPltFig(slices):
+def showPltFig(slices):                 #Show Plt Figures
     columns = 5
     rows = 6
     fig = plt.figure(figsize=(20, 20))
@@ -35,7 +35,7 @@ def showPltFig(slices):
         plt.imshow(img)
     plt.show()
 
-def savePltFig(slices,path):
+def savePltFig(slices,path):            #Save Plt Figure
     columns = 5
     rows = 6
     fig = plt.figure(figsize=(20, 20))
@@ -45,7 +45,7 @@ def savePltFig(slices,path):
         plt.imshow(img)
     plt.savefig(path)
 
-def stretchHist(slc):
+def stretchHist(slc):                   
     max_bit = 2**16
 
     hist,bins = np.histogram(slc.flatten(),max_bit,[0,max_bit])
@@ -67,19 +67,7 @@ def stretchSlicesHist(slices):
     print(np.array(slices_stretch).shape) # Show shape
     return slices_stretch
 
-def fusion(stretched_slices,wi):
-    i= 0
-    fusion = wi[i]*stretched_slices[i]
-    for slc in stretched_slices :
-        if i == 0 : 
-            fusion = fusion
-        else :
-            fusion += slc*wi[i] 
-        i+=1
-    cv.imshow('fusion',fusion)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
-    return fusion
+    
 
     
 if __name__ == "__main__":
@@ -97,12 +85,9 @@ if __name__ == "__main__":
 
     #showPltFig(slicedStretchImage)
     savePltFig(slicedStretchImage,'image/SlicedStretchImages')
-    
+
     showImageHDR(slicedImage[5])
     showImageHDR(slicedStretchImage[5])
-
-    weights = [0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0]
-    fusionned = fusion(slicedStretchImage,weights)
     
 
 
